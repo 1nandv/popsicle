@@ -1,0 +1,5 @@
+- [ ] write lexer to read tokens
+- [ ] parse tokens and make ast
+- [ ] compile ast into assembly (initially only x86_64), i don't want to transpile it into some other language
+- [ ] make an assembler maybe?
+

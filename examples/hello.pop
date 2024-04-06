@@ -1,0 +1,5 @@
+main () :: void
+    let x = 69
+    print "hello"
+;;
+

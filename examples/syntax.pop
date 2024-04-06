@@ -1,0 +1,19 @@
+const math = @import("math")pop
+
+sum (int x, y) :: int
+    return x + y
+;;
+
+divide (int x, y) :: !int
+    if x == 0 || y == 0
+        return !math.ZeroDivision
+    end if
+
+    return x / y
+;;
+
+main () :: void
+    let x, y = 69, 420
+    let result = sum x, y
+;;
+
