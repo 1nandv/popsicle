@@ -1,4 +1,4 @@
-const math = @import("math")pop
+const math = @import("math")
 
 sum (int x, y) :: int
     return x + y
