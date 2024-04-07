@@ -26,7 +26,7 @@ token_t* make_token(Token type, char* value) {
 
 void skip_whitespace(lexer_t *lexer) {
   if (isspace(lexer->ch)) {
-    lexer->ch = lexer->input[lexer->offset++];
+    next_offset(lexer);
   }
 }
 
@@ -35,7 +35,7 @@ char peek(lexer_t *lexer) {
         return '\0';
     }
 
-    return lexer->input[lexer->offset + 1];
+    return lexer->input[lexer->offset++];
 }
 
 void next_offset(lexer_t *lexer) {
@@ -101,7 +101,7 @@ token_t* next(lexer_t *lexer) {
 
         case ':':
             if (peek(lexer) == ':') {
-                lexer->ch = lexer->input[lexer->offset++];
+                next_offset(lexer);
                 return make_token(RETURN_TYPE_OPERATOR, NULL); 
                 break;
             }
@@ -111,7 +111,7 @@ token_t* next(lexer_t *lexer) {
 
         case ';':
             if (peek(lexer) == ';') {
-                lexer->ch = lexer->input[lexer->offset++];
+                next_offset(lexer);
                 return make_token(BLOCK_TERMINATOR, NULL); 
                 break;
             }
