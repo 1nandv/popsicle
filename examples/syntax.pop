@@ -1,4 +1,4 @@
-const math = @import("math")
+const math = @import("std:math")
 
 sum (int x, y) :: int
     return x + y
@@ -15,5 +15,7 @@ divide (int x, y) :: !int
 main () :: void
     let x, y = 69, 420
     let result = sum x, y
+    
+    print "result is :result:"
 ;;
 
