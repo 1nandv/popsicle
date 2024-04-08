@@ -27,36 +27,44 @@ typedef enum EToken {
     MINUS,
     MULTIPLY,
 
+    ILLEGAL,
     END,
-} Token;
+} typeof_token;
 
 typedef struct SToken {
-    Token type;
-    char* lexeme;
+    typeof_token type;
+    char *value;
     // unsigned short offset;
 } token_t;
 
 typedef struct SLexer {
-    const char* input;
+    const char *input;
     char ch;
     size_t length;
     size_t offset;
 } lexer_t;
 
-lexer_t *init_lexer(char* input);
+lexer_t *init_lexer(char *input);
 
-token_t* make_token(Token type, char* value);
+token_t *make_token(typeof_token type, char *value);
 
-token_t* next(lexer_t* lexer);
+token_t *read_token(lexer_t *lexer);
 
-void next_offset(lexer_t* lexer);
+token_t *read_iden(lexer_t *lexer);
 
-token_t* read_iden(lexer_t* lexer);
+token_t *read_string(lexer_t *lexer);
 
-void skip_whitespace(lexer_t* lexer);
+token_t *read_number(lexer_t *lexer);
 
-char peek(lexer_t *lexer);
+const char *stringify_token_type(typeof_token type);
 
+void print_token(token_t *token);
+
+void movechar(lexer_t *lexer);
+
+void read_next(lexer_t *lexer);
+
+void skip_whitespace(lexer_t *lexer);
 
 #endif
 
