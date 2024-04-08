@@ -1,4 +1,0 @@
-pop lang
---- 
-compiled toy language i'm building just for fun in c. i have listed some simple
-ideas for the syntax and the language in the `examples` directory.
