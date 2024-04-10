@@ -6,55 +6,93 @@
 #include "include/lexer.h"
 #include "include/io.h"
 
-lexer_t *init_lexer(char *path) {
-    char *input = readfile(path);
-    lexer_t *lexer = malloc(sizeof(lexer_t));
+// private functions
 
-    if (lexer == NULL) {
-        fprintf(stderr, "fatal: not enough memory available\n");
-        return NULL;
-    }
-
-    lexer->input = input;
-    lexer->length = strlen(input);
-    lexer->offset = 0;
-    lexer->ch = input[lexer->offset];
-
-    return lexer;
-}
-
-token_t *make_token(typeof_token type, char *value) {
-    token_t *token = malloc(sizeof(token_t));
-
-    if (token == NULL) {
-        fprintf(stderr, "fatal: not enough memory available\n");
-        return NULL;
-    }
-
-    token->type = type;
-    token->value = value;
-
-    return token;
-}
-
-void movechar(lexer_t *lexer) {
+static void movechar(lexer_t *lexer) {
     if (lexer->offset < lexer->length && lexer->ch != '\0') {
         lexer->ch = lexer->input[++lexer->offset];
     }
 }
 
-void skip_whitespace(lexer_t* lexer) {
-    while (lexer->ch == ' ' || lexer->ch == '\t' || lexer->ch == '\r' || lexer->ch == '\n') {
+static void prevchar(lexer_t *lexer) {
+    if (lexer->offset > 0) {
+        lexer->ch = lexer->input[--lexer->offset];
+    }
+}
+
+static short should_skip(char ch) {
+	return ch == '\n' || ch == '\t' || ch == ' ' || ch == '\r' || ch == ',';
+}
+
+static void skip_whitespace(lexer_t* lexer) {
+    while (should_skip(lexer->ch)) {
         movechar(lexer);
     }
 }
 
-short isint(char ch) {
-    if (ch >= 30 && ch <= 39) return 1;
-    return 0;
+// checks if character is apostrophe
+static short isstring(char ch) {
+    return ch == '"';
 }
 
-const char *stringify_token_type(typeof_token type) {
+static short isiden(char ch) {
+    return isalpha(ch) || ch == '_';
+}
+
+// for now only ascii digits, but will support hexadecimal values in future
+static short isint(char ch) {
+    return isdigit(ch);
+}
+
+static token_t *read_iden(lexer_t *lexer) {
+	size_t start = lexer->offset;
+
+	while (!should_skip(lexer->ch) && isalpha(lexer->ch)) 
+		movechar(lexer);
+
+	size_t length = lexer->length - start;
+	char *string = malloc(length);
+	strncpy(string, lexer->input+start, lexer->offset - start);
+	string[length] = '\0';
+
+    prevchar(lexer);
+
+	return make_token(IDEN, string);
+}
+
+static token_t *read_int(lexer_t *lexer) {
+    size_t start = lexer->offset;
+
+    do { movechar(lexer); } while (isint(lexer->ch));
+
+    size_t length = lexer->length - start;
+    char *string = malloc(length);
+    strncpy(string, lexer->input+start, lexer->offset - start);
+    string[length] = '\0';
+
+	// cast to int and then back to char*
+	// probably inefficient but it just works
+    int cast = atoi(string);
+    sprintf(string, "%d", cast);
+
+    return make_token(INT, string);
+}
+
+
+static token_t *read_string(lexer_t *lexer) {
+    size_t start = lexer->offset + 1;
+
+    do { movechar(lexer); } while (lexer->ch != '"');
+
+    size_t length = lexer->length - start;
+    char *string = malloc(length);
+    strncpy(string, lexer->input+start, lexer->offset - start);
+    string[length] = '\0';
+
+    return make_token(STRING, string);
+}
+
+static const char *stringify_token_type(typeof_token type) {
     switch (type) {
         case IDEN: return "IDEN";
         case LPAREN: return "LPAREN";
@@ -80,20 +118,12 @@ const char *stringify_token_type(typeof_token type) {
     return "UNDEFINED";
 }
 
-void print_token(token_t *token) {
-    #ifdef DEBUG
-        const char *type = stringify_token_type(token->type);
-        char *template = "<type=%s, int_type=%d, value=%s>\n";
-        printf(template, type, token->type, (char*) token->value);
-    #endif 
-}
+// public functions
 
 void read_next(lexer_t *lexer) {
     token_t *token;
 
     while(lexer->offset < lexer->length) {
-        while (isspace(lexer->ch)) movechar(lexer);
-
         token = read_token(lexer);
 
         if (token->type == END) {
@@ -107,48 +137,10 @@ void read_next(lexer_t *lexer) {
     }
 }
 
-token_t *read_iden(lexer_t *lexer) {
-    size_t start = lexer->offset;
-
-    do { movechar(lexer); } while (!isspace(lexer->ch));
-
-    size_t length = lexer->length - start;
-    char *string = malloc(length);
-    strncpy(string, lexer->input+start, lexer->offset - start);
-    string[length] = '\0';
-
-    return make_token(IDEN, string);
-}
-
-token_t *read_number(lexer_t *lexer) {
-    size_t start = lexer->offset;
-
-    do { movechar(lexer); } while (isdigit(lexer->ch));
-
-    size_t length = lexer->length - start;
-    char *string = malloc(length);
-    strncpy(string, lexer->input+start, lexer->offset - start);
-    string[length] = '\0';
-
-    return make_token(INT, string);
-}
-
-
-token_t *read_string(lexer_t *lexer) {
-    size_t start = lexer->offset + 1;
-
-    do { movechar(lexer); } while (lexer->ch != '"');
-
-    size_t length = lexer->length - start;
-    char *string = malloc(length);
-    strncpy(string, lexer->input+start, lexer->offset - start);
-    string[length] = '\0';
-
-    return make_token(STRING, string);
-}
-
 token_t *read_token(lexer_t *lexer) {
     token_t *token;
+
+	skip_whitespace(lexer);
 
     if (lexer->offset >= lexer->length) {
         return make_token(END, NULL);
@@ -208,15 +200,54 @@ token_t *read_token(lexer_t *lexer) {
             break;
 
         default:
-            if (lexer->ch == '"') token = read_string(lexer);
-            else if (isalpha(lexer->ch)) token = read_iden(lexer);
-            else if (isdigit(lexer->ch)) token = read_number(lexer);
-            else token = make_token(ILLEGAL, &lexer->ch);
+            if (isstring(lexer->ch)) token = read_string(lexer);
+            else if (isiden(lexer->ch)) token = read_iden(lexer);
+            else if (isint(lexer->ch)) token = read_int(lexer);
+            else token = make_token(ILLEGAL, &lexer->ch);			
+
             break;
     }
 
     return token;
 }
 
+void print_token(token_t *token) {
+    #ifdef DEBUG
+        const char *type = stringify_token_type(token->type);
+        char *template = "<type=%s, int_type=%d, value=%s>\n";
+        printf(template, type, token->type, (char*) token->value);
+    #endif 
+}
 
+
+lexer_t *init_lexer(char *path) {
+    char *input = readfile(path);
+    lexer_t *lexer = malloc(sizeof(lexer_t));
+
+    if (lexer == NULL) {
+        fprintf(stderr, "fatal: not enough memory available\n");
+        return NULL;
+    }
+
+    lexer->input = input;
+    lexer->length = strlen(input);
+    lexer->offset = 0;
+    lexer->ch = input[lexer->offset];
+
+    return lexer;
+}
+
+token_t *make_token(typeof_token type, char *value) {
+    token_t *token = malloc(sizeof(token_t));
+
+    if (token == NULL) {
+        fprintf(stderr, "fatal: not enough memory available\n");
+        return NULL;
+    }
+
+    token->type = type;
+    token->value = value;
+
+    return token;
+}
 
