@@ -114,9 +114,18 @@ static const char *stringify_token_type(typeof_token type) {
         case MULTIPLY: return "MULTIPLY";
         case ILLEGAL: return "ILLEGAL";
         case END: return "END";
+        case LOGICAL_OR:  return "LOGICAL_OR";
+        case LOGICAL_AND: return "LOGICAL_AND";
+        case PIPE_OPERATOR: return "PIPE_OPERATOR";
+        case NOT_EQUAL: return "NOT_EQUAL";
+        case EQUAL: return "EQUAL";
     }
 
     return "UNDEFINED";
+}
+
+static char peek(lexer_t *lexer) {
+    return lexer->input[lexer->offset + 1];
 }
 
 // public functions
@@ -164,8 +173,18 @@ token_t *read_token(lexer_t *lexer) {
             token = make_token(MINUS, NULL);
             break;
 
+        case '!':
+            if (peek(lexer) == '=') {
+                token = make_token(NOT_EQUAL, NULL);
+                movechar(lexer);
+            } else token = make_token(BANG, NULL);
+            break;
+
         case '=':
-            token = make_token(ASSIGNMENT, NULL);
+            if (peek(lexer) == '=') {
+                token = make_token(EQUAL, NULL);
+                movechar(lexer);
+            } else token = make_token(ASSIGNMENT, NULL);
             break;
 
         case '*':
@@ -176,31 +195,48 @@ token_t *read_token(lexer_t *lexer) {
             token = make_token(DIVIDE, NULL);
             break;
 
-        case '!':
-            token = make_token(BANG, NULL);
-            break;
-
         case '?':
             token = make_token(SOME, NULL);
             break;
 
+        case ',':
+            token = make_token(COMMA, NULL);
+            break;
+
+        case '&':
+            if (peek(lexer) == '&') { 
+                token = make_token(LOGICAL_OR, NULL);
+                movechar(lexer);
+            }
+
+            break;
+
+        case '|':
+            if (peek(lexer) == '|') { 
+                token = make_token(LOGICAL_OR, NULL);
+                movechar(lexer);
+            } else if (peek(lexer) == '>') {
+                token = make_token(PIPE_OPERATOR, NULL);
+                movechar(lexer);
+            } 
+
+            break;
+
         case ':':
-            if (lexer->input[lexer->offset + 1] == ':') {
+            if (peek(lexer) == ':') {
                 token = make_token(RETURN_TYPE_OPERATOR, NULL);
                 movechar(lexer);
-            } else {
-                token = make_token(COLON, NULL);
-            }
+            } else token = make_token(COLON, NULL);
+            
             break;
 
 
         case ';':
-            if (lexer->input[lexer->offset + 1] == ';') {
-                movechar(lexer);
+            if (peek(lexer) == ';') {
                 token = make_token(BLOCK_TERMINATOR, NULL);
-            } else {
-                token = make_token(SEMI, NULL);
-            }
+                movechar(lexer);
+            } else token = make_token(SEMI, NULL);
+            
             break;
 
         case '\0':

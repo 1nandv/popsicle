@@ -10,6 +10,7 @@ typedef enum TokenType {
     COLON,
     SEMI,
     COMMA,
+
     ASSIGNMENT,
     RETURN_TYPE_OPERATOR, // ::
     BLOCK_TERMINATOR, // ;;
@@ -18,6 +19,7 @@ typedef enum TokenType {
     BANG,
     SOME,
 
+    // types
     INT,
     STRING,
     FLOAT,
@@ -27,6 +29,15 @@ typedef enum TokenType {
     PLUS,
     MINUS,
     MULTIPLY,
+
+    // comparison
+    LOGICAL_OR,
+    LOGICAL_AND,
+    NOT_EQUAL,
+    EQUAL,
+
+    // pipe operator like in elixir
+    PIPE_OPERATOR,
 
     ILLEGAL,
     END,
