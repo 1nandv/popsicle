@@ -21,7 +21,7 @@ static void prevchar(lexer_t *lexer) {
 }
 
 static short should_skip(char ch) {
-	return ch == '\n' || ch == '\t' || ch == ' ' || ch == '\r' || ch == ',';
+	return ch == '\n' || ch == '\t' || ch == ' ' || ch == '\r';
 }
 
 static void skip_whitespace(lexer_t* lexer) {
@@ -99,11 +99,12 @@ static const char *stringify_token_type(typeof_token type) {
         case RPAREN: return "RPAREN";
         case COLON: return "COLON";
         case SEMI: return "SEMI";
+        case COMMA: return "COMMA";
         case ASSIGNMENT: return "ASSIGNMENT";
         case RETURN_TYPE_OPERATOR: return "RETURN_TYPE_OPERATOR";
         case BLOCK_TERMINATOR: return "BLOCK_TERMINATOR";
         case BANG: return "BANG";
-        case OPTIONAL: return "OPTIONAL";
+        case SOME: return "SOME";
         case INT: return "INT";
         case STRING: return "STRING";
         case FLOAT: return "FLOAT";
@@ -173,6 +174,14 @@ token_t *read_token(lexer_t *lexer) {
 
         case '/':
             token = make_token(DIVIDE, NULL);
+            break;
+
+        case '!':
+            token = make_token(BANG, NULL);
+            break;
+
+        case '?':
+            token = make_token(SOME, NULL);
             break;
 
         case ':':

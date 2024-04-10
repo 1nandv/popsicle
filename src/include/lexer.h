@@ -9,13 +9,14 @@ typedef enum TokenType {
     RPAREN,
     COLON,
     SEMI,
+    COMMA,
     ASSIGNMENT,
     RETURN_TYPE_OPERATOR, // ::
     BLOCK_TERMINATOR, // ;;
 
     // error, some type like in rust
     BANG,
-    OPTIONAL,
+    SOME,
 
     INT,
     STRING,
