@@ -259,7 +259,7 @@ token_t *read_token(lexer_t *lexer) {
 void print_token(token_t *token) {
     #ifdef DEBUG
         const char *type = stringify_token_type(token->type);
-        char *template = "<type=%s, int_type=%d, value=%s>\n";
+        char *template = "[ type=%s, int_type=%d, value=%s ]\n";
         printf(template, type, token->type, (char*) token->value);
     #endif 
 }
