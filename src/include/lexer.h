@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-typedef enum EToken {
+typedef enum TokenType {
     IDEN,
     LPAREN,
     RPAREN,
