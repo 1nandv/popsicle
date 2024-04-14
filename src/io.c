@@ -1,9 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "include/io.h"
 
-char *readfile(char *path) {
-    FILE *fp;
+FILE *openfile(char *path) {
+    FILE *fp = fopen(path, "r");
+
+    if (fp == NULL) {
+        fprintf(stderr, "fatal: unable to open file `%s`\n", path);
+        exit(1);
+    }
+
+    return fp;
+}
+
+char *readfile(FILE *fp) {
     char *buffer;
 
     size_t bufsize = 4;
@@ -11,16 +23,14 @@ char *readfile(char *path) {
 
     char ch;
 
-    fp = fopen(path, "r");
+    buffer = malloc(bufsize);
 
-    if (fp == NULL) {
-        fprintf(stderr, "fatal: unable to open file `%s`\n", path);
+    if (buffer == NULL) {
+        fprintf(stderr, "fatal: not enough memory available\n");
         exit(1);
     }
 
-    buffer = malloc(bufsize);
-
-    while ((ch = fgetc(fp)) != EOF) {
+    while (ch = fgetc(fp), ch != EOF) {
         if (offset >= bufsize - 1) {
             bufsize *= 2;
 
@@ -38,15 +48,16 @@ char *readfile(char *path) {
         buffer[offset++] = ch;
     }
 
+    if (ch == EOF && offset == 0) {
+        free(buffer);
+        return NULL;
+    }
+
     buffer[offset] = '\0';
 
     if (bufsize > offset) {
         char *newbuf = realloc(buffer, offset);
-
-        if (newbuf != NULL) {
-            buffer = newbuf;
-            bufsize = offset;
-        }
+        if (newbuf != NULL) buffer = newbuf;
     }
 
     return buffer;
