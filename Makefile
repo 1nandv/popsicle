@@ -7,9 +7,9 @@ ifeq ($(DEBUG), 1)
 	CFLAGS += -DDEBUG -g
 endif
 
-all: pop
+all: popsicle
 
-pop: src/main.c lexer.o io.o
+popsicle: src/main.c lexer.o io.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 lexer.o: src/lexer.c
@@ -19,5 +19,5 @@ io.o: src/io.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
-	rm pop *.o
+	rm popsicle *.o
 
