@@ -50,13 +50,13 @@ typedef struct SToken {
 } token_t;
 
 typedef struct SLexer {
-    const char *input;
+    char *input;
     char ch;
     size_t length;
     size_t offset;
 } lexer_t;
 
-lexer_t *init_lexer(char *input);
+lexer_t *init_lexer(FILE *fp);
 
 token_t *make_token(typeof_token type, char *value);
 

@@ -21,11 +21,11 @@ static void prevchar(lexer_t *lexer) {
 }
 
 static short should_skip(char ch) {
-	return ch == '\n' || ch == '\t' || ch == ' ' || ch == '\r';
+    return ch == '\n' || ch == '\t' || ch == ' ' || ch == '\r';
 }
 
 static void skip_whitespace(lexer_t* lexer) {
-    while (should_skip(lexer->ch)) {
+    while (should_skip(lexer->ch), lexer->offset >= lexer->length) {
         movechar(lexer);
     }
 }
@@ -45,19 +45,19 @@ static short isint(char ch) {
 }
 
 static token_t *read_iden(lexer_t *lexer) {
-	size_t start = lexer->offset;
+    size_t start = lexer->offset;
 
-	while (!should_skip(lexer->ch) && isalpha(lexer->ch)) 
-		movechar(lexer);
+    while (!should_skip(lexer->ch) && isalpha(lexer->ch)) 
+        movechar(lexer);
 
-	size_t length = lexer->length - start;
-	char *string = malloc(length);
-	strncpy(string, lexer->input+start, lexer->offset - start);
-	string[length] = '\0';
+    size_t length = (lexer->length - start) + 1;
+    char *string = malloc(length);
+    strncpy(string, lexer->input+start, lexer->offset - start);
+    string[length] = '\0';
 
     prevchar(lexer);
 
-	return make_token(IDEN, string);
+    return make_token(IDEN, string);
 }
 
 static token_t *read_int(lexer_t *lexer) {
@@ -70,8 +70,8 @@ static token_t *read_int(lexer_t *lexer) {
     strncpy(string, lexer->input+start, lexer->offset - start);
     string[length] = '\0';
 
-	// cast to int and then back to char*
-	// probably inefficient but it just works
+    // cast to int and then back to char*
+    // probably inefficient but it just works
     int cast = atoi(string);
     sprintf(string, "%d", cast);
 
@@ -136,21 +136,25 @@ void read_next(lexer_t *lexer) {
     while(lexer->offset < lexer->length) {
         token = read_token(lexer);
 
-        if (token->type == END) {
-            free(token);
-            return;
-        }
-
         print_token(token);
 
+        if (token->type == END) {
+            if (token->value) free(token->value);
+            return free(token);
+        }
+
         movechar(lexer);
+
+        if (token->value) free(token->value);
+
+        free(token);
     }
 }
 
 token_t *read_token(lexer_t *lexer) {
     token_t *token;
 
-	skip_whitespace(lexer);
+    skip_whitespace(lexer);
 
     if (lexer->offset >= lexer->length) {
         return make_token(END, NULL);
@@ -227,7 +231,7 @@ token_t *read_token(lexer_t *lexer) {
                 token = make_token(RETURN_TYPE_OPERATOR, NULL);
                 movechar(lexer);
             } else token = make_token(COLON, NULL);
-            
+
             break;
 
 
@@ -236,7 +240,7 @@ token_t *read_token(lexer_t *lexer) {
                 token = make_token(BLOCK_TERMINATOR, NULL);
                 movechar(lexer);
             } else token = make_token(SEMI, NULL);
-            
+
             break;
 
         case '\0':
@@ -248,7 +252,7 @@ token_t *read_token(lexer_t *lexer) {
             if (isstring(lexer->ch)) token = read_string(lexer);
             else if (isiden(lexer->ch)) token = read_iden(lexer);
             else if (isint(lexer->ch)) token = read_int(lexer);
-            else token = make_token(ILLEGAL, &lexer->ch);			
+            else token = make_token(ILLEGAL, NULL); // todo: assign illegal character
 
             break;
     }
@@ -257,16 +261,16 @@ token_t *read_token(lexer_t *lexer) {
 }
 
 void print_token(token_t *token) {
-    #ifdef DEBUG
-        const char *type = stringify_token_type(token->type);
-        char *template = "[ type=%s, int_type=%d, value=%s ]\n";
-        printf(template, type, token->type, (char*) token->value);
-    #endif 
+#ifdef DEBUG
+    const char *type = stringify_token_type(token->type);
+    char *template = "[ type=%s, int_type=%d, value=%s ]\n";
+    printf(template, type, token->type, (char*) token->value);
+#endif 
 }
 
 
-lexer_t *init_lexer(char *path) {
-    char *input = readfile(path);
+lexer_t *init_lexer(FILE *fp) {
+    char *input = readfile(fp);
     lexer_t *lexer = malloc(sizeof(lexer_t));
 
     if (lexer == NULL) {
@@ -275,9 +279,9 @@ lexer_t *init_lexer(char *path) {
     }
 
     lexer->input = input;
-    lexer->length = strlen(input);
+    lexer->length = strlen(input) + 1;
     lexer->offset = 0;
-    lexer->ch = input[lexer->offset];
+    lexer->ch = input[0];
 
     return lexer;
 }
